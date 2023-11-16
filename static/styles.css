@@ -1,0 +1,30 @@
+body {
+    background-color:antiquewhite;
+}
+#board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-gap: 10px;
+    width: 300px;
+    margin: 10px auto;
+    font-family: Arial, sans-serif;
+}
+.cell {
+    width: 100px;
+    height: 100px;
+    border: 1px solid #000;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2em;
+}
+#message {
+    font-size: 2em;
+    text-align: center;
+}
+#reset {
+    display: block;
+    margin: 20px auto;
+    font-size: 1.5em;
+    background-color:azure;
+}

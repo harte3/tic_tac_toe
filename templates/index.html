@@ -1,0 +1,176 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tic Tac Toe</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+</head>
+<body>
+    <h1 style="text-align: center;">Tic Tac Toe</h1>
+    <div style="text-align: center;">
+        <select id="game-mode-select">
+            <option value="Human vs Human">Human vs Human</option>
+            <option value="Human vs AI">Human vs AI</option>
+        </select>
+    </div>
+    <div style="text-align: center;">
+        <label for="ai-difficulty-select">AI Difficulty:</label>
+        <select id="ai-difficulty-select">
+            <option value="easy">Easy</option>
+            <option value="hard">Hard</option>
+        </select>
+    </div>
+    <div id="board">
+        {% for i in range(9) %}
+            <button class="cell" data-index="{{ i }}">-</button>
+        {% endfor %}
+    </div>
+    <button id="reset">Reset</button>
+    <div id="message"></div>
+    <div id="game-mode"></div>
+    <div id="ai-difficulty"></div>
+    <div id="player-turn"></div>
+
+    <script>
+
+        function updateBoard() {
+            $.get('/status', function(data) {
+                for (var i = 0; i < 9; i++) {
+                    $('.cell[data-index=' + i + ']').text(data.board[i]);
+                }
+                if (data.status !== 'Continue') {
+                    $('.cell').off('click');  // Disable the game board
+                    $('#message').text(data.status);  // Display the game status
+                }
+                $('#game-mode').text('Game Mode: ' + data.game_mode);
+                $('#ai-difficulty').text('AI Difficulty: ' + data.ai_difficulty);  // Display the AI difficulty level
+            });
+        }
+
+        function getAIMove() {
+            $.post('/ai_move', function(data) {
+                game_board = data.game_board;
+                updateBoard();
+            });
+        }
+
+        function getGameMode() {
+            $.get('/get_game_mode', function(data) {
+                $('#game-mode').text('Game Mode: ' + data.game_mode);
+            });
+        }
+
+        function getPlayerTurn() {
+            $.get('/get_player_turn', function(data) {
+                $('#player-turn').text('Current Turn: ' + data.turn);
+            });
+        }
+
+        function setAIDifficulty(aiDifficulty) {
+            $.ajax({
+                url: '/set_ai_difficulty',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ ai_difficulty: aiDifficulty }),
+                success: function() {
+                    $('#ai-difficulty').text('AI Difficulty: ' + aiDifficulty);  // Display the AI difficulty
+                }
+            });
+        }
+
+        function getAIDifficulty() {
+            $.get('/get_ai_difficulty', function(data) {
+                $('#ai-difficulty').text('AI Difficulty: ' + data.ai_difficulty);  // Display the AI difficulty
+            });
+        }
+
+        $('#ai-difficulty').change(function() {
+            setAIDifficulty($(this).val());
+        });
+
+        function getBoard() {
+            $.get('/get_board', function(data) {
+                for (var i = 0; i < 9; i++) {
+                    $('.cell[data-index=' + i + ']').text(data.board[i]);
+                }
+            });
+        }
+    
+
+        function getGameStatus() {
+            $.get('/get_game_status', function(data) {
+                if (data.status !== 'Continue') {
+                    $('.cell').off('click');  // Disable the game board
+                    $('#message').text(data.status);  // Display the game status
+                }
+            });
+        }
+
+        function makeMove() {
+            var cell = $(this);
+            $.ajax({
+                url: '/move',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ position: cell.data('index') }),
+                success: function() {
+                    updateBoard();
+                }
+            });
+        }
+
+        $('.cell').click(function() {
+            var cell = $(this);
+            var position = cell.data('index');
+            $.ajax({
+                url: '/move',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ position: cell.data('index') }),
+                success: function() {
+                    updateBoard();
+                }
+            });
+        });
+
+        function setGameMode(gameMode) {
+            var aiDifficulty = $('#ai-difficulty-select').val();
+            $.ajax({
+                url: '/set_game_mode',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ game_mode: gameMode, ai_difficulty: aiDifficulty }),
+                success: function() {
+                    $('#game-mode').text('Game Mode: ' + gameMode);
+                    $('#ai-difficulty').text('AI Difficulty: ' + aiDifficulty);  // Display the AI difficulty
+                }
+            });
+        }
+
+        $('#game-mode-select').change(function() {
+            setGameMode($(this).val());
+        });
+
+        $('#ai-difficulty-select').change(function() {
+            setGameMode($('#game-mode-select').val());
+        });
+
+        $('#reset').click(function() {
+            $.ajax({
+                url: '/reset',
+                type: 'POST',
+                contentType: 'application/json',
+                // data: JSON.stringify({ player_names: { 'X': 'Alice', 'O': 'Bob' } }),
+                success: function() {
+                    updateBoard();
+                    $('.cell').off('click').click(makeMove);  // Re-enable the game board
+                    $('#message').text('');  // Clear the message
+                }
+            });
+        });
+
+        updateBoard();
+    </script>
+</body>
+</html>
