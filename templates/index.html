@@ -18,7 +18,9 @@
         <label for="ai-difficulty-select">AI Difficulty:</label>
         <select id="ai-difficulty-select">
             <option value="easy">Easy</option>
+            <option value="medium">Medium</option>
             <option value="hard">Hard</option>
+            <option value="impossible">Impossible</option>
         </select>
     </div>
     <div id="board">
@@ -107,29 +109,31 @@
             });
         }
 
-        function makeMove() {
-            var cell = $(this);
-            $.ajax({
-                url: '/move',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ position: cell.data('index') }),
-                success: function() {
-                    updateBoard();
-                }
-            });
-        }
+        $('.cell').on('click', function() {
+            var position = $(this).data('index');  // Get the position of the clicked cell
 
-        $('.cell').click(function() {
-            var cell = $(this);
-            var position = cell.data('index');
+            // Record the human's move
             $.ajax({
-                url: '/move',
+                url: '/human_move',
                 type: 'POST',
+                data: JSON.stringify({position: position}),
                 contentType: 'application/json',
-                data: JSON.stringify({ position: cell.data('index') }),
-                success: function() {
-                    updateBoard();
+                success: function(data) {
+                    if (data.status === 'OK') {
+                        updateBoard();  // Update the board after the human's move
+
+                        // If the human player has not won, make the computer's move
+                        if (!data.human_won) {
+                            // After 0.25 second, make the computer's move
+                            setTimeout(function() {
+                                $.post('/ai_move', function(data) {
+                                    if (data.status === 'OK') {
+                                        updateBoard();  // Update the board after the computer's move
+                                    }
+                                });
+                            }, 250);  // Delay of 0.25 second
+                        }
+                    }
                 }
             });
         });
@@ -164,7 +168,37 @@
                 // data: JSON.stringify({ player_names: { 'X': 'Alice', 'O': 'Bob' } }),
                 success: function() {
                     updateBoard();
-                    $('.cell').off('click').click(makeMove);  // Re-enable the game board
+                    $('.cell').off('click').on('click', function() {
+                        var position = $(this).data('index');  // Get the position of the clicked cell
+
+                        // Record the human's move
+                        $.ajax({
+                            url: '/human_move',
+                            type: 'POST',
+                            data: JSON.stringify({position: position}),
+                            contentType: 'application/json',
+                            success: function(data) {
+                                if (data.status === 'OK') {
+                                    updateBoard();  // Update the board after the human's move
+
+                                    // After 0.5 seconds, make the computer's move
+                                    setTimeout(function() {
+                                        $.ajax({
+                                            url: '/ai_move',
+                                            type: 'POST',
+                                            data: JSON.stringify({}),  // Send an empty JSON object
+                                            contentType: 'application/json',
+                                            success: function(data) {
+                                                if (data.status === 'OK') {
+                                                    updateBoard();  // Update the board after the computer's move
+                                                }
+                                            }
+                                        });
+                                    }, 500);  // Delay of 0.5 seconds
+                                }
+                            }
+                        });
+                    });
                     $('#message').text('');  // Clear the message
                 }
             });
@@ -173,4 +207,3 @@
         updateBoard();
     </script>
 </body>
-</html>
