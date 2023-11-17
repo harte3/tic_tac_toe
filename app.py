@@ -220,6 +220,7 @@ def ai_move():
                         computer_position = random.choice(possible_positions)
 
         else:
+
             win_conditions = [(0,1,2), (3,4,5), (6,7,8), (0,3,6), (1,4,7), (2,5,8), (0,4,8), (2,4,6)]
             for condition in win_conditions:
                 # Check if the computer can win the game
@@ -232,21 +233,24 @@ def ai_move():
                 elif game_board[condition[1]] == game_board[condition[2]] == 'O' and game_board[condition[0]] == ' ':
                     computer_position = condition[0]
                     break
-                # Check if the human can win the game
-                elif game_board[condition[0]] == game_board[condition[1]] == 'X' and game_board[condition[2]] == ' ':
-                    computer_position = condition[2]
-                    break
-                elif game_board[condition[0]] == game_board[condition[2]] == 'X' and game_board[condition[1]] == ' ':
-                    computer_position = condition[1]
-                    break
-                elif game_board[condition[1]] == game_board[condition[2]] == 'X' and game_board[condition[0]] == ' ':
-                    computer_position = condition[0]
-                    break
+            
+            # Check if the human can win the game
             else:
-                # If no win condition is found, choose a random move
-                empty_positions = [i for i, cell in enumerate(game_board) if cell == ' ']
-                if empty_positions:
-                    computer_position = random.choice(empty_positions)
+                for condition in win_conditions:
+                    if game_board[condition[0]] == game_board[condition[1]] == 'X' and game_board[condition[2]] == ' ':
+                        computer_position = condition[2]
+                        break
+                    elif game_board[condition[0]] == game_board[condition[2]] == 'X' and game_board[condition[1]] == ' ':
+                        computer_position = condition[1]
+                        break
+                    elif game_board[condition[1]] == game_board[condition[2]] == 'X' and game_board[condition[0]] == ' ':
+                        computer_position = condition[0]
+                        break
+                else:
+                    # If no win condition is found, choose a random move
+                    empty_positions = [i for i, cell in enumerate(game_board) if cell == ' ']
+                    if empty_positions:
+                        computer_position = random.choice(empty_positions)
         game_board[computer_position] = player_turn
         # check_win()
         player_turn = 'X' if player_turn == 'O' else 'O'
